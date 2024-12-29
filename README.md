@@ -4,8 +4,7 @@ WeekendSlicer is a gcode generator aimed at 3D printing implicit surfaces. It is
 with no promise of generating correct paths; if you attempt to use it, please inspect the generated code for dangerous paths
 prior to running it.
 
-.. image:: assets/example_gcode_render.png
-  :width: 800px
+![example.png](assets/example_gcode_render.png)
 
 # References and Motivation
 
