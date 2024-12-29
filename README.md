@@ -40,6 +40,17 @@ WeekendSlicer uses a relatively simple approach to slice perimeters (which is cu
     (medium difficulty), top and bottom surface detection (medium difficulty), algorithm simplification/offloading
     (difficult), seam alignment (easy enough). It has a long, long way to go before useful.
 
+- Why is the code structured like that?
+  - See the first question. I intend to improve this if I continue working on the project, but it is proof of concept
+    quality code at the moment.
+
+- What the heck is going on in that path extraction algorithm??
+  - Yeah, it's ugly and probably has bugs. At a high level, we make sure the mesh has a planar surface with "sharp"
+    edges that is coplanar with `z = 0`. This enures that the outline of the shape is contained in the set of triangles
+    with two vertices in this plane (up to some error) and one vertex out of the plane. We then simply encode these
+    into a type that can be hashed in Rust and use this to order these in linear time. In fact, the whole extraction
+    algorithm is linear, as awful as it looks.
+
 - How do I use this?
   - You really shouldn't yet, but if you insist on trying then the command should explain itself with the `-h` flag.
     Building the project is as easy as running `nix build` (if you use Nix).
