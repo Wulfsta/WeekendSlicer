@@ -335,7 +335,6 @@ impl Slicer {
                 }
             }
         }
-        println!("{:?}", extrusion_paths);
         // TODO: Make this return instead of write.
         let mut output_gcode = fs::File::create("output.gcode").unwrap();
         for extrusion_path in extrusion_paths {
