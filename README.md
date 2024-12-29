@@ -1,4 +1,4 @@
-## WeekendSlicer
+# WeekendSlicer
 
 WeekendSlicer is a gcode generator aimed at 3D printing implicit surfaces. It is currently acting only as a proof of concept,
 with no promise of generating correct paths; if you attempt to use it, please inspect the generated code for dangerous paths
@@ -6,7 +6,7 @@ prior to running it.
 
 ![example.png](assets/example_gcode_render.png)
 
-# References and Motivation
+## References and Motivation
 
 - [Manipulation of Implicit Functions](https://christopherolah.wordpress.com/2011/11/06/manipulation-of-implicit-functions-with-an-eye-on-cad/)
   - This is an excellent introduction to the subject of implicit functions.
@@ -16,7 +16,7 @@ prior to running it.
   - Motivation behind the algorithm WeekendSlicer uses. Eventually it would be nice to generate "correct" SDFs from surface
     representations; perhaps going from surface to volume mesh, then volume mesh to "correct" SDF using these techniques.
 
-# Algorithm Overview
+## Algorithm Overview
 
 WeekendSlicer uses a relatively simple approach to slice perimeters (which is currently all it is capable of):
 - Read the surface representation in. For each layer do as follows.
@@ -29,7 +29,7 @@ WeekendSlicer uses a relatively simple approach to slice perimeters (which is cu
     - Add the edge paths to a list.
 - Convert the list of edge paths to gcode and write the file.
 
-# Q&A
+## Q&A
 
 - Why is it called WeekendSlicer?
   - I initially wrote it over a long weekend.
