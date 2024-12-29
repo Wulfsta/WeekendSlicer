@@ -216,22 +216,6 @@ impl Slicer {
                             Tree::constant(layer_z_height),
                         ) + path_spacing * ((perimeter as f64) + 1. / 2.))
                             .max(layer_box.clone());
-                        // debug
-                        //perimeter_tree = layer_box.clone();
-                        //perimeter_tree =bounded_box(
-                        //    -1.,
-                        //    -1.,
-                        //    0.,
-                        //    1.,
-                        //    1.,
-                        //    1., //self.layer_height,
-                        //);
-                        //let mut perimeter_context = Context::new();
-                        //let perimeter_node = perimeter_context.import(&perimeter_tree);
-                        //perimeter_tree = perimeter_context
-                        //    .export(perimeter_node)
-                        //    .expect("No Mr. Bond, I expect a tree.");
-                        //println!("{:?}", perimeter_tree);
                         let perimeter_shape = JitShape::from(perimeter_tree);
                         let perimeter_octree_settings = Settings {
                             depth: 8,
