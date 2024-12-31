@@ -6,10 +6,12 @@ use fidget::context::{Context, Tree};
 use fidget::jit::JitShape;
 use fidget::mesh::{Octree, Settings};
 use fidget::shape::Bounds;
+use fidget::vm::VmData;
 use indexmap::IndexMap;
 use nalgebra::base::{Vector2, Vector3};
 use std::f64::consts::PI;
 use std::fs;
+use std::io::Write;
 use std::path::PathBuf;
 
 static EPS: f64 = 1e-8;
@@ -210,13 +212,53 @@ impl Slicer {
                     // with the tree.
                     for perimeter in (0..self.perimeters).rev() {
                         // this cloning might be slow, unsure if this is an Arc or not
-                        let perimeter_tree = (self.object_tree.clone().remap_xyz(
+                        let mut perimeter_tree = (self.object_tree.clone().remap_xyz(
                             Tree::x(),
                             Tree::y(),
                             Tree::constant(layer_z_height),
-                        ) + path_spacing * ((perimeter as f64) + 1. / 2.))
+                        ) + path_spacing
+                            * ((perimeter as f64) + 1. / 2.))
                             .max(layer_box.clone());
+                        let mut perimeter_context = Context::new();
+                        let perimeter_node = perimeter_context.import(&perimeter_tree);
+                        let perimeter_vmdata =
+                            VmData::<255>::new(&perimeter_context, &[perimeter_node]).unwrap();
+                        let mut temp_vmdata = fs::File::create(format!(
+                            "debug_data/vmdata_{:.2}.bin",
+                            layer.z_height
+                        ))
+                        .unwrap();
+                        bincode::serialize_into(temp_vmdata, &perimeter_vmdata);
+                        perimeter_tree = perimeter_context
+                            .export(perimeter_node)
+                            .expect("No Mr. Bond, I expect a tree.");
                         let perimeter_shape = JitShape::from(perimeter_tree);
+                        let mut temp_settings = fs::File::create(format!(
+                            "debug_data/settings_{:.2}",
+                            layer.z_height
+                        ))
+                        .unwrap();
+                        write!(&mut temp_settings, "depth: {}\n", 8);
+                        write!(
+                            &mut temp_settings,
+                            "center x: {}\n",
+                            (((self.x_max + self.x_min) / 2.) as f32)
+                        );
+                        write!(
+                            &mut temp_settings,
+                            "center y: {}\n",
+                            (((self.y_max + self.y_min) / 2.) as f32)
+                        );
+                        write!(
+                            &mut temp_settings,
+                            "center z: {}\n",
+                            (0. as f32)
+                        );
+                        write!(
+                            &mut temp_settings,
+                            "size: {}\n",
+                            (((self.x_max - self.x_min).max(self.y_max - self.y_min) + EPS) as f32)
+                        );
                         let perimeter_octree_settings = Settings {
                             depth: 8,
                             // TODO: fix bounds
@@ -236,10 +278,10 @@ impl Slicer {
                         // perimter path. I know this is doing a huge amount more computation than
                         // needed for this task, this is a proof of concept.
                         let perimeter_mesh = o.walk_dual(perimeter_octree_settings);
-                        //let mut temp_stl =
-                        //    fs::File::create(format!("debug_data/temp_{}.stl", layer.z_height))
-                        //        .unwrap();
-                        //perimeter_mesh.write_stl(&mut temp_stl);
+                        let mut temp_stl =
+                            fs::File::create(format!("debug_data/temp_{:.2}.stl", layer.z_height))
+                                .unwrap();
+                        perimeter_mesh.write_stl(&mut temp_stl);
                         // Extract path from mesh. Iterate over all triangles. This would not be
                         // necissary if the result was 2D; maybe ask fidget to support it.
                         let mut edge_map_as_bits = IndexMap::new();
