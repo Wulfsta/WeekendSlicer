@@ -5,7 +5,7 @@ use clap::Parser;
 use fidget::context::{Context, Tree};
 use fidget::jit::JitShape;
 use fidget::mesh::{Octree, Settings};
-use fidget::shape::Bounds;
+use fidget::render::View3;
 use fidget::vm::VmData;
 use indexmap::IndexMap;
 use nalgebra::base::{Vector2, Vector3};
@@ -262,15 +262,15 @@ impl Slicer {
                         let perimeter_octree_settings = Settings {
                             depth: 8,
                             // TODO: fix bounds
-                            bounds: Bounds {
-                                center: Vector3::new(
+                            view: View3::from_center_and_scale(
+                                Vector3::new(
                                     ((self.x_max + self.x_min) / 2.) as f32,
                                     ((self.y_max + self.y_min) / 2.) as f32,
                                     0.,
                                 ),
-                                size: ((self.x_max - self.x_min).max(self.y_max - self.y_min) + EPS)
+                                ((self.x_max - self.x_min).max(self.y_max - self.y_min) + EPS)
                                     as f32,
-                            },
+                            ),
                             ..Default::default()
                         };
                         let o = Octree::build(&perimeter_shape, perimeter_octree_settings);
