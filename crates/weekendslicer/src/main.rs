@@ -2,10 +2,10 @@ extern crate clap;
 extern crate fidget;
 
 use clap::Parser;
-use fidget::context::{Context, Tree};
+use fidget::context::Tree;
+use fidget::gui::View3;
 use fidget::jit::JitShape;
 use fidget::mesh::{Octree, Settings};
-use fidget::render::View3;
 use indexmap::IndexMap;
 use nalgebra::base::{Vector2, Vector3};
 use std::f64::consts::PI;
@@ -220,7 +220,7 @@ impl Slicer {
                         let perimeter_octree_settings = Settings {
                             depth: 8,
                             // TODO: fix bounds
-                            view: View3::from_center_and_scale(
+                            world_to_model: View3::from_center_and_scale(
                                 Vector3::new(
                                     ((self.x_max + self.x_min) / 2.) as f32,
                                     ((self.y_max + self.y_min) / 2.) as f32,
@@ -228,20 +228,23 @@ impl Slicer {
                                 ),
                                 ((self.x_max - self.x_min).max(self.y_max - self.y_min) + EPS)
                                     as f32,
-                            ),
+                            )
+                            .world_to_model(),
                             ..Default::default()
                         };
-                        let o = Octree::build(&perimeter_shape, perimeter_octree_settings);
+                        //TODO: remove unwrap
+                        let o =
+                            Octree::build(&perimeter_shape, &perimeter_octree_settings).unwrap();
                         // Produce a mesh that contains a path that we will extract to use as the
                         // perimter path. I know this is doing a huge amount more computation than
                         // needed for this task, this is a proof of concept.
-                        let perimeter_mesh = o.walk_dual(perimeter_octree_settings);
+                        let perimeter_mesh = o.walk_dual();
                         //let mut temp_stl =
                         //    fs::File::create(format!("debug_data/temp_{}.stl", layer.z_height))
                         //        .unwrap();
                         //perimeter_mesh.write_stl(&mut temp_stl);
                         // Extract path from mesh. Iterate over all triangles. This would not be
-                        // necissary if the result was 2D; maybe ask fidget to support it.
+                        // necessary if the result was 2D; maybe ask fidget to support it.
                         let mut edge_map_as_bits = IndexMap::new();
                         // Filter triangles to only those that contain two vertices on the current
                         // layer - this subset of triangles must contain the paths.
@@ -404,7 +407,9 @@ fn main() {
 
     //println!("{}", rhai_def);
 
-    let tree_def = fidget::rhai::eval(&rhai_def).expect("Object definition invalid.");
+    let tree_def = fidget::rhai::engine()
+        .eval(&rhai_def)
+        .expect("Object definition invalid.");
 
     let mut slicer = Slicer::new(
         tree_def,

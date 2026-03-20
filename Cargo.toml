@@ -1,16 +1,25 @@
-[package]
-name = "weekend-slicer"
+[workspace]
+resolver = "2"
+# Note that we define member crates with a wildcard here and NOT with explicit
+# paths because the flake.nix is written in a way such that top-level members
+# (`my-cli` and `my-server`) are built as different derivations which avoid being
+# rebuilt if the other package's sources change.
+members = ["crates/*"]
+
+[workspace.package]
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 license = "AGPL-3.0"
 authors = ["Wulfsta <wulfstawulfsta@gmail.com>"]
 description = "Slicer for implicit surfaces."
 readme = "README.md"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[workspace.metadata.crane]
+name = "weekendslicer-workspace"
 
-[dependencies]
-clap = {version = "4.5.23", features = ["derive", "cargo", "unicode"]}
-fidget = {version = "0.3.5"}
-nalgebra = {version = "0.33.2"}
-indexmap = {version = "2.7.0", features = ["std"]}
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[workspace.dependencies]
+clap = { version = "4.6.0", features = ["derive", "cargo", "unicode"] }
+fidget = { version = "0.4.2" }
+nalgebra = { version = "0.34.1" }
+indexmap = { version = "2.13.0", features = ["std"] }
