@@ -21,8 +21,8 @@ fn if_nonnegative_else(condition, a, b) {
 fn vertical_capsule(radius, height) {
     if_nonnegative_else(-z,
         sphere(radius),
-    if_nonnegative_else(z + height,
-        sphere(radius),
+    if_nonnegative_else(z - height,
+        remap(sphere(radius), x, y, z - height),
     // Else
     sqrt(x*x + y*y) - radius
     ))
@@ -58,4 +58,38 @@ fn unit_gradient_function_triangle_helper(remap_x_param, remap_y_param, remap_z_
     // Else: we are in the positive region.
     remap(abs(z), remap_x_param, remap_y_param, remap_z_param)
     )
+}
+
+// A tetrahedron formed from the origin and unit vectors on the x, y, z axis, which returns 0 inside and 1 outside.
+fn bounded_unit_tetrahedron() {
+    if_nonnegative_else(x,
+        if_nonnegative_else(y,
+            if_nonnegative_else(z,
+                if_nonnegative_else(-x - y - z + 1.0,
+                    0,
+                // Else
+                1),
+            // Else
+            1),
+        // Else
+        1),
+    // Else
+    1)
+}
+
+// Construct a unit gradient function from a list of bounded tetrahedrons inside the volume and a list of surface triangles.
+fn ugf_mesh(tetrahedrons, triangles) {
+    let ugf_base = triangles[0];
+    for i in 1..triangles.len() {
+        ugf_base = min(ugf_base, triangles[i]);
+    }
+
+    // Determine what region we are in.
+    let region = tetrahedrons[0];
+    for i in 1..tetrahedrons.len() {
+        region *= tetrahedrons[i];
+    }
+
+    // If we are inside a single tetrahedron then region = 0, else region = 1.
+    if_nonzero_else(region, ugf_base, -ugf_base)
 }
