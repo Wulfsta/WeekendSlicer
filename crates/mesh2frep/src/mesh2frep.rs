@@ -1,5 +1,6 @@
 //! mesh2frep
 
+use crate::error::{Mesh2FrepError, Mesh2FrepErrorKind};
 use nalgebra::{Matrix3, Rotation3, Vector3, Vector4};
 use rayon::prelude::*;
 use tritet::{InputDataTetMesh, Tetgen};
@@ -14,8 +15,7 @@ pub struct Mesh {
 }
 
 /// Tetrahedralise a closed manifold surface and represent it as a unit gradient function.
-// TODO: Add error types
-pub fn mesh2frep(mesh: &Mesh) -> Result<String, &'static str> {
+pub fn mesh2frep(mesh: &Mesh) -> Result<String, Mesh2FrepError> {
     // Points: only the STL vertices (no bbox corners).
     let points: Vec<(i32, f64, f64, f64)> = mesh
         .vertices
@@ -37,12 +37,9 @@ pub fn mesh2frep(mesh: &Mesh) -> Result<String, &'static str> {
         regions: vec![],
     };
 
-    let tetgen = Tetgen::from_input_data(&input)
-        .map_err(|_| "TetGen failed to construct input; is the surface a closed manifold?")?;
+    let tetgen = Tetgen::from_input_data(&input)?;
 
-    tetgen
-        .generate_mesh(false, false, None, None)
-        .map_err(|_| "TetGen failed to generate the mesh")?;
+    tetgen.generate_mesh(false, false, None, None)?;
 
     let vertices: Vec<Vector3<f64>> = (0..tetgen.out_npoint())
         .map(|i| {
@@ -54,7 +51,9 @@ pub fn mesh2frep(mesh: &Mesh) -> Result<String, &'static str> {
         })
         .collect();
 
-    assert_eq!(tetgen.out_cell_npoint(), 4, "Expected linear tet4 cells");
+    if tetgen.out_cell_npoint() != 4 {
+        return Err(Mesh2FrepError::create(Mesh2FrepErrorKind::BadTetrahedrons));
+    };
 
     let mut interior: Vec<Vector4<usize>> = Vec::new();
     for c in 0..tetgen.out_ncell() {
@@ -91,6 +90,7 @@ pub fn mesh2frep(mesh: &Mesh) -> Result<String, &'static str> {
     rhai_frep.push_str(RHAI_UGF_MESH);
     rhai_frep.push('\n');
 
+    // This is a bit ugly but it does work.
     rhai_frep.push_str("let tetrahedrons = [\n");
     let tetrahedrons_string: String = interior.par_iter().map(|tetrahedron| {
         let tet_orig = vertices[tetrahedron[0]];
@@ -103,7 +103,7 @@ pub fn mesh2frep(mesh: &Mesh) -> Result<String, &'static str> {
             tetrahedron_z_transform,
         ]);
         if !itm.try_inverse_mut() {
-            return Err("degenerate matrix");
+            return Err(Mesh2FrepError::create(Mesh2FrepErrorKind::DegenerateMatrix));
         };
 
         let (x0, y0, z0) = (itm[(0, 0)], itm[(0, 1)], itm[(0, 2)]);
@@ -122,6 +122,7 @@ pub fn mesh2frep(mesh: &Mesh) -> Result<String, &'static str> {
 
     let eps = 1e-8;
 
+    // This is even uglier than above but oh well.
     rhai_frep.push_str("let triangles = [\n");
     let triangles_string: String = surface_triangles.par_iter().map(|triangle|{
         let triangle_v0 = vertices[triangle[0]];
@@ -134,7 +135,7 @@ pub fn mesh2frep(mesh: &Mesh) -> Result<String, &'static str> {
         // linear transform from unit x, y, z vectors to triangle edges one, two, and unit normal
         let mut itm = Matrix3::from_columns(&[shift_e1, shift_e2, unit_normal]);
         if !itm.try_inverse_mut() {
-            return Err("degenerate matrix");
+           return Err(Mesh2FrepError::create(Mesh2FrepErrorKind::DegenerateMatrix));
         };
 
         let (tx, ty, tz) = (triangle_v0.x, triangle_v0.y, triangle_v0.z);
@@ -153,7 +154,7 @@ pub fn mesh2frep(mesh: &Mesh) -> Result<String, &'static str> {
         let e1_itm: Matrix3<f64>;
         if (unit_capsule_axis + unit_shift_e1).norm() > eps {
             e1_itm = Rotation3::rotation_between(&unit_capsule_axis, &unit_shift_e1)
-                .ok_or("degenerate rotation matrix e1")?
+                .ok_or_else(|| Mesh2FrepError::create(Mesh2FrepErrorKind::DegenerateMatrix))?
                 .inverse()
                 .into();
         } else {
@@ -167,7 +168,7 @@ pub fn mesh2frep(mesh: &Mesh) -> Result<String, &'static str> {
         let e2_itm: Matrix3<f64>;
         if (unit_capsule_axis + unit_shift_e2).norm() > eps {
             e2_itm = Rotation3::rotation_between(&unit_capsule_axis, &unit_shift_e2)
-                .ok_or("degenerate rotation matrix e2")?
+                .ok_or_else(|| Mesh2FrepError::create(Mesh2FrepErrorKind::DegenerateMatrix))?
                 .inverse()
                 .into();
         } else {
@@ -185,7 +186,7 @@ pub fn mesh2frep(mesh: &Mesh) -> Result<String, &'static str> {
         let e3_itm: Matrix3<f64>;
         if (unit_capsule_axis + unit_shift_e3).norm() > eps {
             e3_itm = Rotation3::rotation_between(&unit_capsule_axis, &unit_shift_e3)
-                .ok_or("degenerate rotation matrix e3")?
+                .ok_or_else(|| Mesh2FrepError::create(Mesh2FrepErrorKind::DegenerateMatrix))?
                 .inverse()
                 .into();
         } else {
