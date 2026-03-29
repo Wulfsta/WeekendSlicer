@@ -151,29 +151,27 @@ pub fn mesh2frep(mesh: &Mesh) -> Result<String, Mesh2FrepError> {
         let unit_shift_e2 = shift_e2 / shift_e2_norm;
         let unit_capsule_axis = Vector3::<f64>::new(0.0, 0.0, 1.0);
 
-        let e1_itm: Matrix3<f64>;
-        if (unit_capsule_axis + unit_shift_e1).norm() > eps {
-            e1_itm = Rotation3::rotation_between(&unit_capsule_axis, &unit_shift_e1)
+        let e1_itm: Matrix3<f64> = if (unit_capsule_axis + unit_shift_e1).norm() > eps {
+            Rotation3::rotation_between(&unit_capsule_axis, &unit_shift_e1)
                 .ok_or_else(|| Mesh2FrepError::create(Mesh2FrepErrorKind::DegenerateMatrix))?
                 .inverse()
-                .into();
+                .into()
         } else {
-            e1_itm = Matrix3::new(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, -1.0);
-        }
+            Matrix3::new(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, -1.0)
+        };
 
         let (e1_x0, e1_y0, e1_z0) = (e1_itm[(0, 0)], e1_itm[(0, 1)], e1_itm[(0, 2)]);
         let (e1_x1, e1_y1, e1_z1) = (e1_itm[(1, 0)], e1_itm[(1, 1)], e1_itm[(1, 2)]);
         let (e1_x2, e1_y2, e1_z2) = (e1_itm[(2, 0)], e1_itm[(2, 1)], e1_itm[(2, 2)]);
 
-        let e2_itm: Matrix3<f64>;
-        if (unit_capsule_axis + unit_shift_e2).norm() > eps {
-            e2_itm = Rotation3::rotation_between(&unit_capsule_axis, &unit_shift_e2)
+        let e2_itm: Matrix3<f64> = if (unit_capsule_axis + unit_shift_e2).norm() > eps {
+            Rotation3::rotation_between(&unit_capsule_axis, &unit_shift_e2)
                 .ok_or_else(|| Mesh2FrepError::create(Mesh2FrepErrorKind::DegenerateMatrix))?
                 .inverse()
-                .into();
+                .into()
         } else {
-            e2_itm = Matrix3::new(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, -1.0);
-        }
+            Matrix3::new(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, -1.0)
+        };
 
         let (e2_x0, e2_y0, e2_z0) = (e2_itm[(0, 0)], e2_itm[(0, 1)], e2_itm[(0, 2)]);
         let (e2_x1, e2_y1, e2_z1) = (e2_itm[(1, 0)], e2_itm[(1, 1)], e2_itm[(1, 2)]);
@@ -183,15 +181,14 @@ pub fn mesh2frep(mesh: &Mesh) -> Result<String, Mesh2FrepError> {
         let shift_e3_norm = shift_e3.norm();
         let unit_shift_e3 = shift_e3 / shift_e3_norm;
 
-        let e3_itm: Matrix3<f64>;
-        if (unit_capsule_axis + unit_shift_e3).norm() > eps {
-            e3_itm = Rotation3::rotation_between(&unit_capsule_axis, &unit_shift_e3)
+        let e3_itm: Matrix3<f64> = if (unit_capsule_axis + unit_shift_e3).norm() > eps {
+            Rotation3::rotation_between(&unit_capsule_axis, &unit_shift_e3)
                 .ok_or_else(|| Mesh2FrepError::create(Mesh2FrepErrorKind::DegenerateMatrix))?
                 .inverse()
-                .into();
+                .into()
         } else {
-            e3_itm = Matrix3::new(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, -1.0);
-        }
+            Matrix3::new(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, -1.0)
+        };
 
         let (e3_x0, e3_y0, e3_z0) = (e3_itm[(0, 0)], e3_itm[(0, 1)], e3_itm[(0, 2)]);
         let (e3_x1, e3_y1, e3_z1) = (e3_itm[(1, 0)], e3_itm[(1, 1)], e3_itm[(1, 2)]);

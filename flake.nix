@@ -36,7 +36,13 @@
           inherit (pkgs) lib;
 
           craneLib = inputs.crane.mkLib pkgs;
-          src = craneLib.cleanCargoSource ./.;
+          src = lib.fileset.toSource {
+            root = ./.;
+            fileset = lib.fileset.unions [
+              (craneLib.fileset.commonCargoSources ./.)
+              (lib.fileset.fileFilter (file: file.hasExt "rhai") ./.)
+            ];
+          };
 
           # Common arguments can be set here to avoid repeating them later
           commonArgs = {
@@ -161,7 +167,7 @@
             weekendslicer-workspace-toml-fmt = craneLib.taploFmt {
               src = pkgs.lib.sources.sourceFilesBySuffices src [ ".toml" ];
               # taplo arguments can be further customized below as needed
-              # taploExtraArgs = "--config ./taplo.toml";
+              taploExtraArgs = "--config ./taplo.toml";
             };
 
             # Audit dependencies

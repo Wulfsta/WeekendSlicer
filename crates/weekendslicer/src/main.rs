@@ -63,14 +63,13 @@ impl ExtrusionPath {
         extruder_cross_sectional_area_per_mm: f64,
         start: Vector2<f32>,
     ) -> ExtrusionPath {
-        let mut paths = Vec::new();
-        paths.push(start);
+        let paths = vec![start];
         ExtrusionPath {
-            path_width: path_width,
-            path_height: path_height,
-            z_height: z_height,
-            extruder_cross_sectional_area_per_mm: extruder_cross_sectional_area_per_mm,
-            paths: paths,
+            path_width,
+            path_height,
+            z_height,
+            extruder_cross_sectional_area_per_mm,
+            paths,
         }
     }
 
@@ -78,28 +77,25 @@ impl ExtrusionPath {
         self.paths.push(point);
     }
 
+    #[allow(dead_code)]
     fn first_point_in_path(&self) -> Option<&Vector2<f32>> {
         self.paths.first()
     }
 
+    #[allow(dead_code)]
     fn last_point_in_path(&self) -> Option<&Vector2<f32>> {
         self.paths.last()
     }
 
+    #[allow(dead_code)]
     fn first_point_in_path_as_bits(&self) -> Option<[u32; 2]> {
         let fir = self.paths.first();
-        match fir {
-            Some(f) => Some([f[0].to_bits(), f[1].to_bits()]),
-            None => None,
-        }
+        fir.map(|f| [f[0].to_bits(), f[1].to_bits()])
     }
 
     fn last_point_in_path_as_bits(&self) -> Option<[u32; 2]> {
         let las = self.paths.last();
-        match las {
-            Some(l) => Some([l[0].to_bits(), l[1].to_bits()]),
-            None => None,
-        }
+        las.map(|l| [l[0].to_bits(), l[1].to_bits()])
     }
 
     fn write_gcode<F: std::io::Write>(&self, out: &mut F) -> Result<(), std::io::Error> {
@@ -107,10 +103,10 @@ impl ExtrusionPath {
             + PI * (self.path_height / 2.).powi(2);
         match self.paths.first() {
             Some(first_point) => {
-                write!(out, "G1 Z{:.6}\n", self.z_height)?;
-                write!(
+                writeln!(out, "G1 Z{:.6}", self.z_height)?;
+                writeln!(
                     out,
-                    "G1 X{:.6} Y{:.6} Z{:.6}\n",
+                    "G1 X{:.6} Y{:.6} Z{:.6}",
                     first_point.x, first_point.y, self.z_height
                 )?;
             }
@@ -120,9 +116,9 @@ impl ExtrusionPath {
             let extrusion_volume =
                 ((point_1 - point_0).norm() as f64) * extrusion_cross_section_area;
             let extruder_distance = extrusion_volume / self.extruder_cross_sectional_area_per_mm;
-            write!(
+            writeln!(
                 out,
-                "G1 X{:.6} Y{:.6} E{:.6}\n",
+                "G1 X{:.6} Y{:.6} E{:.6}",
                 point_1.x, point_1.y, extruder_distance
             )?;
         }
@@ -147,6 +143,7 @@ struct Slicer {
 }
 
 impl Slicer {
+    #[allow(clippy::too_many_arguments)]
     fn new(
         tree: Tree,
         nozzle_diameter: f64,
@@ -163,17 +160,17 @@ impl Slicer {
     ) -> Slicer {
         Slicer {
             object_tree: tree,
-            nozzle_diameter: nozzle_diameter,
-            layer_height: layer_height,
-            filament_diameter: filament_diameter,
-            extrusion_width_scalar: extrusion_width_scalar,
-            perimeters: perimeters,
-            x_min: x_min,
-            x_max: x_max,
-            y_min: y_min,
-            y_max: y_max,
-            z_min: z_min,
-            z_max: z_max,
+            nozzle_diameter,
+            layer_height,
+            filament_diameter,
+            extrusion_width_scalar,
+            perimeters,
+            x_min,
+            x_max,
+            y_min,
+            y_max,
+            z_min,
+            z_max,
         }
     }
 
@@ -283,56 +280,48 @@ impl Slicer {
                         }
                         // This whole block of code disgusts me. It could be reordered to be more
                         // concise, but eh.
-                        match edge_map_as_bits.first() {
-                            Some((key, _)) => {
-                                let mut curr_path = ExtrusionPath::new(
-                                    extrusion_width,
-                                    self.layer_height,
-                                    layer.z_height + self.layer_height,
-                                    extruder_cross_sectional_area_per_mm,
-                                    Vector2::new(f32::from_bits(key[0]), f32::from_bits(key[1])),
-                                );
-                                while !edge_map_as_bits.is_empty() {
-                                    // unwrap should be fine, these always have at least one value
-                                    // in the path.
-                                    let last_point =
-                                        curr_path.last_point_in_path_as_bits().unwrap();
-                                    let next_point = edge_map_as_bits.swap_remove(&last_point);
-                                    match next_point {
-                                        Some(p) => {
-                                            curr_path.add_to_path(Vector2::new(
-                                                f32::from_bits(p[0]),
-                                                f32::from_bits(p[1]),
-                                            ));
-                                            if edge_map_as_bits.is_empty() {
-                                                // TODO: get rid of this clone; memswap?
-                                                extrusion_paths.push(curr_path.clone());
-                                            }
-                                        }
-                                        None => {
+                        if let Some((key, _)) = edge_map_as_bits.first() {
+                            let mut curr_path = ExtrusionPath::new(
+                                extrusion_width,
+                                self.layer_height,
+                                layer.z_height + self.layer_height,
+                                extruder_cross_sectional_area_per_mm,
+                                Vector2::new(f32::from_bits(key[0]), f32::from_bits(key[1])),
+                            );
+                            while !edge_map_as_bits.is_empty() {
+                                // unwrap should be fine, these always have at least one value
+                                // in the path.
+                                let last_point = curr_path.last_point_in_path_as_bits().unwrap();
+                                let next_point = edge_map_as_bits.swap_remove(&last_point);
+                                match next_point {
+                                    Some(p) => {
+                                        curr_path.add_to_path(Vector2::new(
+                                            f32::from_bits(p[0]),
+                                            f32::from_bits(p[1]),
+                                        ));
+                                        if edge_map_as_bits.is_empty() {
                                             // TODO: get rid of this clone; memswap?
                                             extrusion_paths.push(curr_path.clone());
-                                            match edge_map_as_bits.first() {
-                                                Some((key, _)) => {
-                                                    curr_path = ExtrusionPath::new(
-                                                        extrusion_width,
-                                                        self.layer_height,
-                                                        layer.z_height + self.layer_height,
-                                                        extruder_cross_sectional_area_per_mm,
-                                                        Vector2::new(
-                                                            f32::from_bits(key[0]),
-                                                            f32::from_bits(key[1]),
-                                                        ),
-                                                    );
-                                                }
-                                                // map is empty and loop will break
-                                                None => (),
-                                            }
+                                        }
+                                    }
+                                    None => {
+                                        // TODO: get rid of this clone; memswap?
+                                        extrusion_paths.push(curr_path.clone());
+                                        if let Some((key, _)) = edge_map_as_bits.first() {
+                                            curr_path = ExtrusionPath::new(
+                                                extrusion_width,
+                                                self.layer_height,
+                                                layer.z_height + self.layer_height,
+                                                extruder_cross_sectional_area_per_mm,
+                                                Vector2::new(
+                                                    f32::from_bits(key[0]),
+                                                    f32::from_bits(key[1]),
+                                                ),
+                                            );
                                         }
                                     }
                                 }
                             }
-                            None => (),
                         }
                     }
                 }
@@ -341,7 +330,7 @@ impl Slicer {
         // TODO: Make this return instead of write.
         let mut output_gcode = fs::File::create("output.gcode").unwrap();
         for extrusion_path in extrusion_paths {
-            extrusion_path.write_gcode(&mut output_gcode);
+            let _ = extrusion_path.write_gcode(&mut output_gcode);
         }
     }
 }

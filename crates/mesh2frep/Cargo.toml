@@ -5,7 +5,7 @@ edition.workspace = true
 publish = false
 license.workspace = true
 authors.workspace = true
-description.workspace = true
+description = "Library and cli tool to tetrahedralize a manifold surface mesh and convert it to a Fidget parsable F-Rep."
 readme.workspace = true
 
 [dependencies]

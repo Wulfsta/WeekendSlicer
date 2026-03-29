@@ -2,6 +2,8 @@
 #
 # https://taplo.tamasfe.dev/configuration/file.html#configuration-file
 
+exclude = ["**/crates/workspace-hack/Cargo.toml"]
+
 [formatting]
 reorder_keys = false
 
