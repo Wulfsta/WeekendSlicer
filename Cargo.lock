@@ -824,6 +824,7 @@ dependencies = [
  "fidget",
  "indexmap",
  "nalgebra",
+ "rayon",
  "stl_io",
  "tritet",
  "workspace-hack 0.1.0",

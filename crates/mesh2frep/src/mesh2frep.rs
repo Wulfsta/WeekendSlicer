@@ -1,6 +1,7 @@
 //! mesh2frep
 
 use nalgebra::{Matrix3, Rotation3, Vector3, Vector4};
+use rayon::prelude::*;
 use tritet::{InputDataTetMesh, Tetgen};
 
 const RHAI_UGF_MESH: &str = include_str!("rhai/ugf_mesh.rhai");
@@ -13,6 +14,7 @@ pub struct Mesh {
 }
 
 /// Tetrahedralise a closed manifold surface and represent it as a unit gradient function.
+// TODO: Add error types
 pub fn mesh2frep(mesh: &Mesh) -> Result<String, &'static str> {
     // Points: only the STL vertices (no bbox corners).
     let points: Vec<(i32, f64, f64, f64)> = mesh
@@ -90,7 +92,7 @@ pub fn mesh2frep(mesh: &Mesh) -> Result<String, &'static str> {
     rhai_frep.push('\n');
 
     rhai_frep.push_str("let tetrahedrons = [\n");
-    for tetrahedron in interior {
+    let tetrahedrons_string: String = interior.par_iter().map(|tetrahedron| {
         let tet_orig = vertices[tetrahedron[0]];
         let tetrahedron_x_transform = vertices[tetrahedron[1]] - tet_orig;
         let tetrahedron_y_transform = vertices[tetrahedron[2]] - tet_orig;
@@ -109,17 +111,19 @@ pub fn mesh2frep(mesh: &Mesh) -> Result<String, &'static str> {
         let (x2, y2, z2) = (itm[(2, 0)], itm[(2, 1)], itm[(2, 2)]);
         let (tx, ty, tz) = (tet_orig.x, tet_orig.y, tet_orig.z);
 
-        rhai_frep.push_str(&format!(
+        Ok(format!(
             "    remap(bounded_unit_tetrahedron(), (x - {tx}) * {x0} + (y - {ty}) * {y0} + (z - {tz}) * {z0}, (x - {tx}) * {x1} + (y - {ty}) * {y1} + (z - {tz}) * {z1}, (x - {tx}) * {x2} + (y - {ty}) * {y2} + (z - {tz}) * {z2}),\n"
-        ));
-    }
+        ).to_string())
+    }).collect::<Result<Vec<_>, _>>()?.join("");
+    rhai_frep.push_str(&tetrahedrons_string);
     rhai_frep.push_str("];");
+    rhai_frep.push('\n');
     rhai_frep.push('\n');
 
     let eps = 1e-8;
 
     rhai_frep.push_str("let triangles = [\n");
-    for triangle in surface_triangles {
+    let triangles_string: String = surface_triangles.par_iter().map(|triangle|{
         let triangle_v0 = vertices[triangle[0]];
         let triangle_v1 = vertices[triangle[1]];
         let triangle_v2 = vertices[triangle[2]];
@@ -195,13 +199,17 @@ pub fn mesh2frep(mesh: &Mesh) -> Result<String, &'static str> {
         let e3_translation = triangle_v0 + shift_e1;
         let (e3_tx, e3_ty, e3_tz) = (e3_translation.x, e3_translation.y, e3_translation.z);
 
-        rhai_frep.push_str(&format!(
-            "    unit_gradient_function_triangle_helper((x - {tx}) * {x0} + (y - {ty}) * {y0} + (z - {tz}) * {z0}, (x - {tx}) * {x1} + (y - {ty}) * {y1} + (z - {tz}) * {z1}, (x - {tx}) * {x2} + (y - {ty}) * {y2} + (z - {tz}) * {z2},"
+        let mut triangle_frep = String::new();
+        triangle_frep.push_str(&format!(
+            "    unit_gradient_function_triangle_helper((x - {tx}) * {x0} + (y - {ty}) * {y0} + (z - {tz}) * {z0}, (x - {tx}) * {x1} + (y - {ty}) * {y1} + (z - {tz}) * {z1}, (x - {tx}) * {x2} + (y - {ty}) * {y2} + (z - {tz}) * {z2}, "
         ));
-        rhai_frep.push_str(&format!("min(remap(vertical_capsule(0, {shift_e1_norm}), (x - {tx}) * {e1_x0} + (y - {ty}) * {e1_y0} + (z - {tz}) * {e1_z0}, (x - {tx}) * {e1_x1} + (y - {ty}) * {e1_y1} + (z - {tz}) * {e1_z1}, (x - {tx}) * {e1_x2} + (y - {ty}) * {e1_y2} + (z - {tz}) * {e1_z2}), "));
-        rhai_frep.push_str(&format!("min(remap(vertical_capsule(0, {shift_e2_norm}), (x - {tx}) * {e2_x0} + (y - {ty}) * {e2_y0} + (z - {tz}) * {e2_z0}, (x - {tx}) * {e2_x1} + (y - {ty}) * {e2_y1} + (z - {tz}) * {e2_z1}, (x - {tx}) * {e2_x2} + (y - {ty}) * {e2_y2} + (z - {tz}) * {e2_z2}), "));
-        rhai_frep.push_str(&format!("remap(vertical_capsule(0, {shift_e3_norm}), (x - {e3_tx}) * {e3_x0} + (y - {e3_ty}) * {e3_y0} + (z - {e3_tz}) * {e3_z0}, (x - {e3_tx}) * {e3_x1} + (y - {e3_ty}) * {e3_y1} + (z - {e3_tz}) * {e3_z1}, (x - {e3_tx}) * {e3_x2} + (y - {e3_ty}) * {e3_y2} + (z - {e3_tz}) * {e3_z2})))),\n"));
-    }
+        triangle_frep.push_str(&format!("min(remap(vertical_capsule(0, {shift_e1_norm}), (x - {tx}) * {e1_x0} + (y - {ty}) * {e1_y0} + (z - {tz}) * {e1_z0}, (x - {tx}) * {e1_x1} + (y - {ty}) * {e1_y1} + (z - {tz}) * {e1_z1}, (x - {tx}) * {e1_x2} + (y - {ty}) * {e1_y2} + (z - {tz}) * {e1_z2}), "));
+        triangle_frep.push_str(&format!("min(remap(vertical_capsule(0, {shift_e2_norm}), (x - {tx}) * {e2_x0} + (y - {ty}) * {e2_y0} + (z - {tz}) * {e2_z0}, (x - {tx}) * {e2_x1} + (y - {ty}) * {e2_y1} + (z - {tz}) * {e2_z1}, (x - {tx}) * {e2_x2} + (y - {ty}) * {e2_y2} + (z - {tz}) * {e2_z2}), "));
+        triangle_frep.push_str(&format!("remap(vertical_capsule(0, {shift_e3_norm}), (x - {e3_tx}) * {e3_x0} + (y - {e3_ty}) * {e3_y0} + (z - {e3_tz}) * {e3_z0}, (x - {e3_tx}) * {e3_x1} + (y - {e3_ty}) * {e3_y1} + (z - {e3_tz}) * {e3_z1}, (x - {e3_tx}) * {e3_x2} + (y - {e3_ty}) * {e3_y2} + (z - {e3_tz}) * {e3_z2})))),\n"));
+        Ok(triangle_frep)
+    }).collect::<Result<Vec<_>, _>>()?.join("");
+
+    rhai_frep.push_str(&triangles_string);
     rhai_frep.push_str("];");
     rhai_frep.push('\n');
     rhai_frep.push('\n');
