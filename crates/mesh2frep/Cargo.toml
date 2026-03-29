@@ -1,0 +1,20 @@
+[package]
+name = "mesh2frep"
+version.workspace = true
+edition.workspace = true
+publish = false
+license.workspace = true
+authors.workspace = true
+description.workspace = true
+readme.workspace = true
+
+[dependencies]
+clap.workspace = true
+fidget.workspace = true
+indexmap.workspace = true
+nalgebra.workspace = true
+stl_io.workspace = true
+tritet.workspace = true
+workspace-hack = { version = "0.1", path = "../workspace-hack" }
+
+[lib]

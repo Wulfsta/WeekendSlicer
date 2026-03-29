@@ -81,6 +81,8 @@
                 ./Cargo.toml
                 ./Cargo.lock
                 (craneLib.fileset.commonCargoSources ./crates/weekendslicer)
+                (craneLib.fileset.commonCargoSources ./crates/mesh2frep)
+                (lib.fileset.fileFilter (file: file.hasExt "rhai") ./crates/mesh2frep)
                 (craneLib.fileset.commonCargoSources ./crates/workspace-hack)
                 (craneLib.fileset.commonCargoSources crate)
               ];
@@ -100,25 +102,35 @@
               pname = "weekendslicer";
               cargoExtraArgs = "-p weekendslicer";
               src = fileSetForCrate ./crates/weekendslicer;
-
-              postInstall = ''
-                wrapProgram $out/bin/weekendslicer \
-                  --prefix LD_LIBRARY_PATH : ${
-                    lib.makeLibraryPath [
-                      pkgs.vulkan-loader
-                      pkgs.libGL
-                      pkgs.wayland
-                      pkgs.libxkbcommon
-                    ]
-                  }
-              '';
             }
           );
+
+          mesh2frep = craneLib.buildPackage (
+            individualCrateArgs
+            // {
+              pname = "mesh2frep";
+              cargoExtraArgs = "-p mesh2frep";
+              src = fileSetForCrate ./crates/mesh2frep;
+            }
+          );
+
+          # Define Python dependencies
+          pythonDeps =
+            ps: with ps; [
+              click
+              numpy
+              matplotlib
+              scipy
+              tqdm
+            ];
+
+          # Python environment with required packages
+          python-env = pkgs.python3.withPackages pythonDeps;
         in
         {
           checks = {
             # Build the crates as part of `nix flake check` for convenience
-            inherit weekendslicer;
+            inherit weekendslicer mesh2frep;
 
             # Run clippy (and deny all warnings) on the workspace source,
             # again, reusing the dependency artifacts from above.
@@ -196,13 +208,17 @@
           };
 
           packages = {
-            inherit weekendslicer;
+            inherit weekendslicer mesh2frep;
           };
 
           apps = {
             weekendslicer = {
               type = "app";
               program = "${weekendslicer}/bin/weekendslicer";
+            };
+            mesh2frep = {
+              type = "app";
+              program = "${mesh2frep}/bin/mesh2frep";
             };
           };
 
@@ -213,6 +229,7 @@
             # Extra inputs can be added here; cargo and rustc are provided by default.
             packages = [
               pkgs.cargo-hakari
+              python-env
             ];
           };
         };
