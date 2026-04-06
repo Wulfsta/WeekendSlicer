@@ -397,6 +397,7 @@ fn main() {
     //println!("{}", rhai_def);
 
     let tree_def = fidget::rhai::engine()
+        .on_progress(|_| None)
         .eval(&rhai_def)
         .expect("Object definition invalid.");
 
