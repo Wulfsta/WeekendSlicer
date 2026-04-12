@@ -17,7 +17,7 @@ fn if_nonnegative_else(condition, a, b) {
     if_nonzero_else(res, a, b)
 }
 
-// A function that creates of vertical capsule of a fixed height.
+// A function that creates a vertical capsule of a fixed height.
 fn vertical_capsule(radius, height) {
     if_nonnegative_else(-z,
         sphere(radius),

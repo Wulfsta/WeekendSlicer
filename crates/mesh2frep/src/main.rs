@@ -1,8 +1,9 @@
 use clap::Parser;
 use mesh2frep::{Mesh, mesh2frep};
 use nalgebra::Vector3;
-use std::fs::{File, write};
-use std::io::BufReader;
+use std::fs::File;
+use std::fs::OpenOptions;
+use std::io::{BufReader, Write};
 use std::path::PathBuf;
 use stl_io::IndexedMesh;
 
@@ -12,6 +13,10 @@ use stl_io::IndexedMesh;
 struct Args {
     /// Path to the input STL file.
     input: PathBuf,
+
+    /// Path to the output rhai script. [default: frep.rhai]
+    #[arg(short, long, default_value = "frep.rhai")]
+    output: PathBuf,
 }
 
 fn load_stl(path: &PathBuf) -> Result<Mesh, Box<dyn std::error::Error + Send + Sync>> {
@@ -45,7 +50,11 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
     let rhai_frep = mesh2frep(&mesh)?;
 
-    write("debug_data/frep.rhai", rhai_frep).expect("Unable to write file");
+    let mut file = OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&args.output)?;
+    file.write_all(rhai_frep.as_bytes())?;
 
     Ok(())
 }
