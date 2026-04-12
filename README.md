@@ -13,8 +13,7 @@ prior to running it.
 - [Fidget](https://github.com/mkeeter/fidget)
   - Powerful library that WeekendSlicer relies on.
 - [Interior SDFs](https://iquilezles.org/articles/interiordistance/)
-  - Motivation behind the algorithm WeekendSlicer uses. Eventually it would be nice to generate "correct" SDFs from surface
-    representations; perhaps going from surface to volume mesh, then volume mesh to "correct" SDF using these techniques.
+  - Motivation behind the algorithm WeekendSlicer uses.
 
 ## Algorithm Overview
 
@@ -35,10 +34,11 @@ WeekendSlicer uses a relatively simple approach to slice perimeters (which is cu
   - I initially wrote it over a long weekend.
 
 - Is this useful?
-  - Not yet! It might become more useful if I continue to work on it - especially once it can slice objects not natively
-    represented by functions. It also needs many other features implemented to be considered close to complete: infill
-    (medium difficulty), top and bottom surface detection (medium difficulty), algorithm simplification/offloading
-    (difficult), seam alignment (easy enough). It has a long, long way to go before useful.
+  - Not yet! It might become more useful if I continue to work on it - ~especially once it can slice objects not natively
+    represented by functions~ see [mesh2frep](/crates/mesh2frep/README.md) for initial work on this. It also needs many
+    other features implemented to be considered close to complete: infill (medium difficulty), top and bottom surface
+    detection (medium difficulty), algorithm simplification/offloading (difficult), seam alignment (easy enough). It
+    has a long, long way to go before useful.
 
 - Why is the code structured like that?
   - See the first question. I intend to improve this if I continue working on the project, but it is proof of concept
