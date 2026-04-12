@@ -38,7 +38,7 @@ fn vertical_capsule(radius, height) {
 // remap_z_param: remapping of the z axis for the triangle
 // edge_function: union of three vertical capsules of radius zero and height equal to the length of the
 //  triangle edge it correponds to, oriented in space at the edge.
-fn unit_gradient_function_triangle_helper(remap_x_param, remap_y_param, remap_z_param, edge_function) {
+fn signed_distance_function_triangle_helper(remap_x_param, remap_y_param, remap_z_param, edge_function) {
     let planes = [
         -x,
         -y,
@@ -77,8 +77,8 @@ fn bounded_unit_tetrahedron() {
     1)
 }
 
-// Construct a unit gradient function from a list of bounded tetrahedrons inside the volume and a list of surface triangles.
-fn ugf_mesh(tetrahedrons, triangles) {
+// Construct a signed distance function from a list of bounded tetrahedrons inside the volume and a list of surface triangles.
+fn sdf_mesh(tetrahedrons, triangles) {
     let ugf_base = triangles[0];
     for i in 1..triangles.len() {
         ugf_base = min(ugf_base, triangles[i]);

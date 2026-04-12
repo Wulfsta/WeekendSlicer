@@ -5,7 +5,7 @@ use nalgebra::{Matrix3, Rotation3, Vector3, Vector4};
 use rayon::prelude::*;
 use tritet::{InputDataTetMesh, Tetgen};
 
-const RHAI_UGF_MESH: &str = include_str!("rhai/ugf_mesh.rhai");
+const RHAI_SDF_MESH: &str = include_str!("rhai/sdf_mesh.rhai");
 
 /// A closed, orientable triangulated surface mesh.
 #[derive(Debug, Clone)]
@@ -87,7 +87,7 @@ pub fn mesh2frep(mesh: &Mesh) -> Result<String, Mesh2FrepError> {
         "// Generated file representing a mesh transformed into a functional representation.\n",
     );
     rhai_frep.push('\n');
-    rhai_frep.push_str(RHAI_UGF_MESH);
+    rhai_frep.push_str(RHAI_SDF_MESH);
     rhai_frep.push('\n');
 
     // This is a bit ugly but it does work.
@@ -199,7 +199,7 @@ pub fn mesh2frep(mesh: &Mesh) -> Result<String, Mesh2FrepError> {
 
         let mut triangle_frep = String::new();
         triangle_frep.push_str(&format!(
-            "    unit_gradient_function_triangle_helper((x - {tx}) * {x0} + (y - {ty}) * {y0} + (z - {tz}) * {z0}, (x - {tx}) * {x1} + (y - {ty}) * {y1} + (z - {tz}) * {z1}, (x - {tx}) * {x2} + (y - {ty}) * {y2} + (z - {tz}) * {z2}, "
+            "    signed_distance_function_triangle_helper((x - {tx}) * {x0} + (y - {ty}) * {y0} + (z - {tz}) * {z0}, (x - {tx}) * {x1} + (y - {ty}) * {y1} + (z - {tz}) * {z1}, (x - {tx}) * {x2} + (y - {ty}) * {y2} + (z - {tz}) * {z2}, "
         ));
         triangle_frep.push_str(&format!("min(remap(vertical_capsule(0, {shift_e1_norm}), (x - {tx}) * {e1_x0} + (y - {ty}) * {e1_y0} + (z - {tz}) * {e1_z0}, (x - {tx}) * {e1_x1} + (y - {ty}) * {e1_y1} + (z - {tz}) * {e1_z1}, (x - {tx}) * {e1_x2} + (y - {ty}) * {e1_y2} + (z - {tz}) * {e1_z2}), "));
         triangle_frep.push_str(&format!("min(remap(vertical_capsule(0, {shift_e2_norm}), (x - {tx}) * {e2_x0} + (y - {ty}) * {e2_y0} + (z - {tz}) * {e2_z0}, (x - {tx}) * {e2_x1} + (y - {ty}) * {e2_y1} + (z - {tz}) * {e2_z1}, (x - {tx}) * {e2_x2} + (y - {ty}) * {e2_y2} + (z - {tz}) * {e2_z2}), "));
@@ -212,7 +212,7 @@ pub fn mesh2frep(mesh: &Mesh) -> Result<String, Mesh2FrepError> {
     rhai_frep.push('\n');
     rhai_frep.push('\n');
 
-    rhai_frep.push_str("ugf_mesh(tetrahedrons, triangles)");
+    rhai_frep.push_str("sdf_mesh(tetrahedrons, triangles)");
 
     Ok(rhai_frep)
 }
