@@ -46,9 +46,9 @@ fn unit_gradient_function_triangle_helper(remap_x_param, remap_y_param, remap_z_
     ];
 
     // Iterate over the planes and count what region we are in.
-    let region_marker = 0;
-    for plane in planes {
-        region_marker += if_nonnegative_else(plane, 1, 0);
+    let region_marker = if_nonnegative_else(planes[0], 1, 0);
+    for i in 1..planes.len() {
+        region_marker += if_nonnegative_else(planes[i], 1, 0);
     }
 
     // If the region_marker equal to 1 or 2 (greater than 0.5).
