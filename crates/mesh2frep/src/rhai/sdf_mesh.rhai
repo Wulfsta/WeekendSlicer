@@ -29,7 +29,7 @@ fn vertical_capsule(radius, height) {
 }
 
 // Helper to create infinitely thin triangles with a unit gradient. When subtracting a value, a, from this
-//  function, it behaves like the Minkowski sum of the triangle and a sphere of diameter a. The remapping
+//  function, it behaves like the Minkowski sum of the triangle and a sphere of radius a. The remapping
 //  functions are the inverse transformation of the map that takes the unit vectors in x, y, z and maps them
 //  to edge one, two, and the unit normal of the given triangle.
 //
@@ -53,7 +53,7 @@ fn signed_distance_function_triangle_helper(remap_x_param, remap_y_param, remap_
 
     // If the region_marker equal to 1 or 2 (greater than 0.5).
     if_nonnegative_else(remap(region_marker - 0.5, remap_x_param, remap_y_param, remap_z_param),
-        // We do not remap the edge function, as it would stretch the cylanders and spheres, ruining the SDF property.
+        // We do not remap the edge function, as it would stretch the cylinders and spheres, ruining the SDF property.
         edge_function,
     // Else: we are in the positive region.
     remap(abs(z), remap_x_param, remap_y_param, remap_z_param)
