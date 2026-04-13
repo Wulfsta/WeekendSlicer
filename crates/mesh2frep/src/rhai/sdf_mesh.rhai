@@ -53,7 +53,7 @@ fn signed_distance_function_triangle_helper(remap_x_param, remap_y_param, remap_
 
     // If the region_marker equal to 1 or 2 (greater than 0.5).
     if_nonnegative_else(remap(region_marker - 0.5, remap_x_param, remap_y_param, remap_z_param),
-        // We do not remap the edge function, as it would stretch the cylanders and spheres, ruining the UGF property.
+        // We do not remap the edge function, as it would stretch the cylanders and spheres, ruining the SDF property.
         edge_function,
     // Else: we are in the positive region.
     remap(abs(z), remap_x_param, remap_y_param, remap_z_param)
