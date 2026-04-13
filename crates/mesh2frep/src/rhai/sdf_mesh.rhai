@@ -37,7 +37,7 @@ fn vertical_capsule(radius, height) {
 // remap_y_param: remapping of the y axis for the triangle
 // remap_z_param: remapping of the z axis for the triangle
 // edge_function: union of three vertical capsules of radius zero and height equal to the length of the
-//  triangle edge it correponds to, oriented in space at the edge.
+//  triangle edge it corresponds to, oriented in space at the edge.
 fn signed_distance_function_triangle_helper(remap_x_param, remap_y_param, remap_z_param, edge_function) {
     let planes = [
         -x,
