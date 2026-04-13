@@ -79,9 +79,9 @@ fn bounded_unit_tetrahedron() {
 
 // Construct a signed distance function from a list of bounded tetrahedrons inside the volume and a list of surface triangles.
 fn sdf_mesh(tetrahedrons, triangles) {
-    let ugf_base = triangles[0];
+    let sdf_base = triangles[0];
     for i in 1..triangles.len() {
-        ugf_base = min(ugf_base, triangles[i]);
+        sdf_base = min(sdf_base, triangles[i]);
     }
 
     // Determine what region we are in.
@@ -91,5 +91,5 @@ fn sdf_mesh(tetrahedrons, triangles) {
     }
 
     // If we are inside a single tetrahedron then region = 0, else region = 1.
-    if_nonzero_else(region, ugf_base, -ugf_base)
+    if_nonzero_else(region, sdf_base, -sdf_base)
 }
